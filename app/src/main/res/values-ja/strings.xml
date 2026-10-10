@@ -1,0 +1,14 @@
+<resources>
+    <string name="generate">QR生成</string>
+    <string name="image">画像</string>
+    <string name="save">保存</string>
+    <string name="copy">コピー</string>
+    <string name="share">共有</string>
+    <string name="open">開く</string>
+    <string name="hint">テキストまたはURL</string>
+    <string name="no_camera">カメラを使用できません</string>
+    <string name="not_found">QRコードが見つかりません</string>
+    <string name="too_long">テキストが長すぎます</string>
+    <string name="done">完了</string>
+    <string name="failed">失敗しました</string>
+</resources>

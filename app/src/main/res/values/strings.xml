@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">mQR</string>
+    <string name="generate">Generate QR</string>
+    <string name="image">Image</string>
+    <string name="save">Save</string>
+    <string name="copy">Copy</string>
+    <string name="share">Share</string>
+    <string name="open">Open</string>
+    <string name="hint">Text or URL</string>
+    <string name="no_camera">Camera unavailable</string>
+    <string name="not_found">No QR code found</string>
+    <string name="too_long">Text too long</string>
+    <string name="done">Done</string>
+    <string name="failed">Failed</string>
+</resources>
