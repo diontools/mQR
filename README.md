@@ -17,7 +17,7 @@
 
 次のどちらかで GitHub Actions がビルドし、APK をリリースに添付します。
 
-- Actions → build → Run workflow で `main` を選び、バージョン（例: `1.0.0`）を入力する。タグ `v1.0.0` は自動で作成される
+- Actions → build → Run workflow で `main` を選び（main 以外ではエラー）、バージョン（例: `1.0.0`）を入力する。タグ `v1.0.0` は自動で作成される
 - `v*` タグを push する
 
 ```sh
