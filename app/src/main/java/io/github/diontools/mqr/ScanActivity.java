@@ -10,7 +10,9 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.net.Uri;
@@ -20,6 +22,7 @@ import android.os.HandlerThread;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
 import android.view.TextureView;
+import android.view.View;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
@@ -41,6 +44,7 @@ import java.util.Map;
 public class ScanActivity extends Activity implements TextureView.SurfaceTextureListener, Camera.PreviewCallback {
     private static final int REQ_CAMERA = 1;
     private static final int REQ_IMAGE = 2;
+    private static final float SCAN_RATIO = 0.7f; // 画面短辺に対する読み取り枠の大きさ
 
     private final QRCodeReader reader = new QRCodeReader();
     private TextureView preview;
@@ -48,6 +52,7 @@ public class ScanActivity extends Activity implements TextureView.SurfaceTexture
     private Handler handler;
     private Camera camera; // handler スレッドでのみ触る
     private int width, height;
+    private volatile int crop; // 読み取り枠のフレーム上での一辺 (px)。0 は未確定
     private volatile boolean paused;
     private boolean asked; // 拒否後に onResume で再要求し続けないため
 
@@ -66,6 +71,7 @@ public class ScanActivity extends Activity implements TextureView.SurfaceTexture
         FrameLayout root = new FrameLayout(this);
         root.setFitsSystemWindows(true);
         root.addView(preview);
+        root.addView(new Overlay());
         root.addView(bar, new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM));
         setContentView(root);
     }
@@ -144,7 +150,7 @@ public class ScanActivity extends Activity implements TextureView.SurfaceTexture
                 camera.setPreviewTexture(surface);
                 camera.setPreviewCallbackWithBuffer(this);
                 camera.addCallbackBuffer(new byte[width * height * 3 / 2]);
-                camera.startPreview();
+                if (!paused) camera.startPreview(); // 結果表示中なら閉じるまで止めておく
                 runOnUiThread(() -> fitPreview(rotated ? height : width, rotated ? width : height));
             } catch (Exception e) {
                 if (camera != null) camera.release();
@@ -161,15 +167,45 @@ public class ScanActivity extends Activity implements TextureView.SurfaceTexture
         Matrix m = new Matrix();
         m.setScale(w * scale / vw, h * scale / vh, vw / 2, vh / 2);
         preview.setTransform(m);
+        // 枠は中央の正方形なので、回転に関係なくフレーム中央の正方形に対応する
+        crop = Math.min((int) (Math.min(vw, vh) * SCAN_RATIO / scale), Math.min(w, h));
+    }
+
+    // 読み取り枠の外側を暗く表示する
+    private class Overlay extends View {
+        private final Paint dim = new Paint();
+        private final Paint frame = new Paint(Paint.ANTI_ALIAS_FLAG);
+
+        Overlay() {
+            super(ScanActivity.this);
+            dim.setColor(0x99000000);
+            frame.setColor(0xffffffff);
+            frame.setStyle(Paint.Style.STROKE);
+            frame.setStrokeWidth(2 * getResources().getDisplayMetrics().density);
+        }
+
+        @Override
+        protected void onDraw(Canvas c) {
+            int w = getWidth(), h = getHeight();
+            int s = (int) (Math.min(w, h) * SCAN_RATIO);
+            int l = (w - s) / 2, t = (h - s) / 2, r = l + s, b = t + s;
+            c.drawRect(0, 0, w, t, dim);
+            c.drawRect(0, b, w, h, dim);
+            c.drawRect(0, t, l, b, dim);
+            c.drawRect(r, t, w, b, dim);
+            c.drawRect(l, t, r, b, frame);
+        }
     }
 
     @Override
     public void onPreviewFrame(byte[] data, Camera cam) {
-        if (!paused) {
-            // QR の検出は回転に依存しないのでフレームをそのまま渡す
-            String text = decode(new PlanarYUVLuminanceSource(data, width, height, 0, 0, width, height, false), false);
+        int c = crop;
+        if (!paused && c > 0) {
+            // QR の検出は回転に依存しないので中央部分をそのまま渡す
+            String text = decode(new PlanarYUVLuminanceSource(data, width, height, (width - c) / 2, (height - c) / 2, c, c, false), false);
             if (text != null) {
                 paused = true;
+                cam.stopPreview();
                 runOnUiThread(() -> showResult(text));
             }
         }
@@ -222,7 +258,7 @@ public class ScanActivity extends Activity implements TextureView.SurfaceTexture
                 if (result != null) showResult(result);
                 else {
                     toast(R.string.not_found);
-                    paused = false;
+                    resumeScan();
                 }
             });
         }).start();
@@ -232,7 +268,7 @@ public class ScanActivity extends Activity implements TextureView.SurfaceTexture
         preview.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
         AlertDialog.Builder b = new AlertDialog.Builder(this)
                 .setMessage(text)
-                .setOnDismissListener(d -> paused = false)
+                .setOnDismissListener(d -> resumeScan())
                 .setPositiveButton(R.string.copy, (d, w) -> {
                     getSystemService(ClipboardManager.class).setPrimaryClip(ClipData.newPlainText(null, text));
                 })
@@ -251,6 +287,13 @@ public class ScanActivity extends Activity implements TextureView.SurfaceTexture
             });
         }
         b.show();
+    }
+
+    private void resumeScan() {
+        paused = false;
+        handler.post(() -> {
+            if (camera != null) camera.startPreview(); // プレビュー中なら何もしない
+        });
     }
 
     private void toast(int text) {
