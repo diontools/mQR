@@ -88,7 +88,7 @@ jobs:
           # whatsnew のリリースノートを自動生成ノートの前に置く
           scripts/play.sh notes whatsnew > "$RUNNER_TEMP/notes.md"
           # このコミットにタグ v<version> を作成してリリースする
-          gh release create "v$VERSION" "$APK" "$APK.sha256" --target "$GITHUB_SHA" --generate-notes --notes-file "$RUNNER_TEMP/notes.md"
+          gh release create "v$VERSION" "$APK" "$APK.sha256" THIRD_PARTY_NOTICES.md --target "$GITHUB_SHA" --generate-notes --notes-file "$RUNNER_TEMP/notes.md"
 
   play:
     # 手動リリース時、Google Play の設定 (Variables) があるときだけ実行する
