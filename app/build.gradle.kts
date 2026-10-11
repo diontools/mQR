@@ -14,6 +14,8 @@ android {
         targetSdk = 36
         versionCode = prop("versionCode")?.toInt() ?: 1
         versionName = prop("versionName") ?: "0.0.0-dev"
+        // ストア用スクリーンショット撮影 (scripts/screenshots.sh)。テスト APK にだけ入る
+        testInstrumentationRunner = "io.github.diontools.mqr.Screenshots"
     }
 
     signingConfigs {

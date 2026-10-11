@@ -2,16 +2,21 @@ package io.github.diontools.mqr;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.Gravity;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.zxing.EncodeHintType;
@@ -31,6 +36,7 @@ public class GenerateActivity extends Activity {
     private ImageView image;
     private EditText input;
     private Bitmap qr; // 1 モジュール = 1 ピクセル
+    private ErrorCorrectionLevel level = ErrorCorrectionLevel.L;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -41,6 +47,36 @@ public class GenerateActivity extends Activity {
         input = new EditText(this);
         input.setHint(R.string.hint);
         input.setMaxLines(4);
+
+        // 誤り訂正レベル。前回の選択を覚えておく
+        SharedPreferences prefs = getPreferences(MODE_PRIVATE);
+        try {
+            level = ErrorCorrectionLevel.valueOf(prefs.getString("level", level.name()));
+        } catch (IllegalArgumentException ignored) {
+        }
+        int pad = (int) (8 * getResources().getDisplayMetrics().density);
+        RadioGroup levels = new RadioGroup(this);
+        levels.setOrientation(LinearLayout.HORIZONTAL);
+        levels.setGravity(Gravity.CENTER_VERTICAL);
+        levels.setPadding(pad, 0, pad, 0);
+        TextView label = new TextView(this);
+        label.setText(R.string.level);
+        label.setPadding(0, 0, pad, 0);
+        levels.addView(label);
+        for (ErrorCorrectionLevel l : ErrorCorrectionLevel.values()) {
+            RadioButton b = new RadioButton(this);
+            b.setId(l.ordinal() + 1); // 固定 ID にして再生成時に状態を戻せるようにする
+            b.setText(l.name());
+            RadioGroup.LayoutParams lp = new RadioGroup.LayoutParams(-2, -2);
+            lp.setMarginEnd(pad * 2);
+            levels.addView(b, lp);
+        }
+        levels.check(level.ordinal() + 1);
+        levels.setOnCheckedChangeListener((g, id) -> {
+            level = ErrorCorrectionLevel.values()[id - 1];
+            prefs.edit().putString("level", level.name()).apply();
+            update(input.getText().toString());
+        });
 
         Button save = new Button(this);
         save.setText(R.string.save);
@@ -54,6 +90,7 @@ public class GenerateActivity extends Activity {
         root.setFitsSystemWindows(true);
         root.addView(image, new LinearLayout.LayoutParams(-1, 0, 1));
         root.addView(input, -1, -2);
+        root.addView(levels, -1, -2);
         root.addView(save, -1, -2);
         setContentView(root);
 
@@ -83,7 +120,7 @@ public class GenerateActivity extends Activity {
             // ASCII 以外を含むときだけ UTF-8 (ECI 付き) にする
             if (!StandardCharsets.US_ASCII.newEncoder().canEncode(text)) hints.put(EncodeHintType.CHARACTER_SET, "UTF-8");
             try {
-                ByteMatrix m = Encoder.encode(text, ErrorCorrectionLevel.M, hints).getMatrix();
+                ByteMatrix m = Encoder.encode(text, level, hints).getMatrix();
                 int n = m.getWidth(), size = n + QUIET * 2;
                 int[] px = new int[size * size];
                 for (int y = 0; y < size; y++) {
