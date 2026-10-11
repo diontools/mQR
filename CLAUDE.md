@@ -4,6 +4,8 @@
 
 - コミットメッセージに `Co-Authored-By:` や `Claude-Session:` などの帰属トレーラーを付けない。
 - PR 本文にも「Generated with Claude Code」やセッション URL などの帰属行を付けない。
+- コミットの作者は `diontools <12995573+diontools@users.noreply.github.com>` にする（Claude 名義だと squash マージ時に GitHub が `Co-authored-by` を付けるため）。
+- squash マージではコミットメッセージを明示し、`Co-authored-by` を含めない。
 
 ## ブランチ運用
 
