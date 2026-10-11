@@ -5,6 +5,7 @@
     <string name="copy">コピー</string>
     <string name="share">共有</string>
     <string name="open">開く</string>
+    <string name="level">誤り訂正</string>
     <string name="hint">テキストまたはURL</string>
     <string name="no_camera">カメラを使用できません</string>
     <string name="not_found">QRコードが見つかりません</string>

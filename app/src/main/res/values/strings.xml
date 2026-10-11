@@ -6,6 +6,7 @@
     <string name="copy">Copy</string>
     <string name="share">Share</string>
     <string name="open">Open</string>
+    <string name="level">Error correction</string>
     <string name="hint">Text or URL</string>
     <string name="no_camera">Camera unavailable</string>
     <string name="not_found">No QR code found</string>

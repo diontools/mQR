@@ -1,1 +1,1 @@
-Scans QR codes only inside the center frame and stops the camera after a successful read.
+You can now choose the QR code error correction level (L/M/Q/H) when generating. The default is L (previously fixed at M).
