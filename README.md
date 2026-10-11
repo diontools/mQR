@@ -15,7 +15,7 @@
 
 ## リリース
 
-次のどちらかで GitHub Actions がビルドし、APK をリリースに添付します。
+次のどちらかで GitHub Actions がビルドし、APK をリリースに添付します。リリース本文は `whatsnew/*.txt`（リリース前の PR で更新する）。
 
 - Actions → build → Run workflow で `main` を選び（main 以外ではエラー）、バージョン（例: `1.0.0`）を入力する。タグ `v1.0.0` は自動で作成される
 - `v*` タグを push する
@@ -41,3 +41,7 @@ git tag v1.0.0 && git push origin v1.0.0
 ```sh
 keytool -genkeypair -v -keystore release.jks -keyalg RSA -keysize 4096 -validity 10000 -alias mqr
 ```
+
+### Google Play
+
+Run workflow でのリリース時に AAB を Google Play にアップロードできます（鍵を保存しない Workload Identity Federation 方式）。設定手順は [docs/google-play.md](docs/google-play.md)。
