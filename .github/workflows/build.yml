@@ -29,6 +29,9 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v5
 
+      - name: Check release notes
+        run: scripts/play.sh check whatsnew
+
       - name: Decode keystore
         env:
           SIGNING_KEYSTORE_BASE64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
@@ -57,9 +60,10 @@ jobs:
             VERSION="0.0.0-${GITHUB_SHA::7}"
           fi
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
-          ./gradlew assembleRelease -PversionName="$VERSION" -PversionCode="$GITHUB_RUN_NUMBER"
+          ./gradlew assembleRelease bundleRelease -PversionName="$VERSION" -PversionCode="$GITHUB_RUN_NUMBER"
           APK="mqr-$VERSION.apk"
           cp app/build/outputs/apk/release/app-release.apk "$APK"
+          cp app/build/outputs/bundle/release/app-release.aab "mqr-$VERSION.aab"
           sha256sum "$APK" > "$APK.sha256"
           echo "APK=$APK" >> "$GITHUB_ENV"
           echo "### $APK: $(stat -c %s "$APK") bytes" >> "$GITHUB_STEP_SUMMARY"
@@ -71,14 +75,47 @@ jobs:
             ${{ env.APK }}
             ${{ env.APK }}.sha256
 
+      - uses: actions/upload-artifact@v5
+        with:
+          name: aab
+          path: mqr-${{ env.VERSION }}.aab
+
       - name: Release
         if: github.ref_type == 'tag' || inputs.version != ''
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # whatsnew のリリースノートを自動生成ノートの前に置く
+          scripts/play.sh notes whatsnew > "$RUNNER_TEMP/notes.md"
           # タグ push 時は既存タグを使い、手動実行時はこのコミットにタグを作成する
           if [ "$GITHUB_REF_TYPE" = tag ]; then
-            gh release create "$GITHUB_REF_NAME" "$APK" "$APK.sha256" --verify-tag --generate-notes
+            gh release create "$GITHUB_REF_NAME" "$APK" "$APK.sha256" --verify-tag --generate-notes --notes-file "$RUNNER_TEMP/notes.md"
           else
-            gh release create "v$VERSION" "$APK" "$APK.sha256" --target "$GITHUB_SHA" --generate-notes
+            gh release create "v$VERSION" "$APK" "$APK.sha256" --target "$GITHUB_SHA" --generate-notes --notes-file "$RUNNER_TEMP/notes.md"
           fi
+
+  play:
+    # 手動リリース時、Google Play の設定 (Variables) があるときだけ実行する
+    needs: build
+    if: inputs.version != '' && vars.GCP_WIF_PROVIDER != ''
+    runs-on: ubuntu-latest
+    environment: play
+    permissions:
+      contents: read
+      id-token: write # Workload Identity Federation 用
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/download-artifact@v5
+        with:
+          name: aab
+
+      - name: Upload to Google Play
+        env:
+          GCP_WIF_PROVIDER: ${{ vars.GCP_WIF_PROVIDER }}
+          GCP_SERVICE_ACCOUNT: ${{ vars.GCP_SERVICE_ACCOUNT }}
+          PLAY_TRACK: ${{ vars.PLAY_TRACK }}
+          PLAY_RELEASE_STATUS: ${{ vars.PLAY_RELEASE_STATUS }}
+          PACKAGE_NAME: io.github.diontools.mqr
+          VERSION_NAME: ${{ inputs.version }}
+        run: scripts/play.sh upload whatsnew mqr-*.aab

@@ -1,0 +1,1 @@
+Scans QR codes only inside the center frame and stops the camera after a successful read.
