@@ -15,13 +15,10 @@
 
 ## リリース
 
-次のどちらかで GitHub Actions がビルドし、APK をリリースに添付します。リリース本文は `whatsnew/*.txt`（リリース前の PR で更新する）。
-
-- Actions → build → Run workflow で `main` を選び（main 以外ではエラー）、バージョン（例: `1.0.0`）を入力する。タグ `v1.0.0` は自動で作成される
-- `v*` タグを push する
+Actions → build → Run workflow で `main` を選び（main 以外ではエラー）、バージョン（例: `1.0.0`）を入力すると、GitHub Actions がビルドし、タグ `v1.0.0` を作成して APK をリリースに添付します。リリース本文は `whatsnew/*.txt`（リリース前の PR で更新する）。タグを手動で push してもリリースは作成されません。
 
 ```sh
-git tag v1.0.0 && git push origin v1.0.0
+gh workflow run build.yml -R diontools/mQR --ref main -f version=1.0.0
 ```
 
 ### 署名鍵
