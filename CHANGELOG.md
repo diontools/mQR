@@ -2,7 +2,7 @@
 
 利用者に見える変更を記録します。各版の詳細は [GitHub のリリース](https://github.com/diontools/mQR/releases) を参照してください。
 
-## 未リリース
+## [1.0.1] - 2026-10-11
 
 ### 修正
 
@@ -21,4 +21,5 @@
 - 他のアプリの「共有」や文字選択メニューから QR コードを作成
 - 権限はカメラのみで、インターネットには接続しない
 
+[1.0.1]: https://github.com/diontools/mQR/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/diontools/mQR/releases/tag/v1.0.0
