@@ -30,7 +30,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v5
 
       - name: Check release notes
-        run: python3 scripts/play_upload.py check whatsnew
+        run: scripts/play.sh check whatsnew
 
       - name: Decode keystore
         env:
@@ -86,7 +86,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           # whatsnew のリリースノートを自動生成ノートの前に置く
-          python3 scripts/play_upload.py notes whatsnew > "$RUNNER_TEMP/notes.md"
+          scripts/play.sh notes whatsnew > "$RUNNER_TEMP/notes.md"
           # タグ push 時は既存タグを使い、手動実行時はこのコミットにタグを作成する
           if [ "$GITHUB_REF_TYPE" = tag ]; then
             gh release create "$GITHUB_REF_NAME" "$APK" "$APK.sha256" --verify-tag --generate-notes --notes-file "$RUNNER_TEMP/notes.md"
@@ -118,4 +118,4 @@ jobs:
           PLAY_RELEASE_STATUS: ${{ vars.PLAY_RELEASE_STATUS }}
           PACKAGE_NAME: io.github.diontools.mqr
           VERSION_NAME: ${{ inputs.version }}
-        run: python3 scripts/play_upload.py upload whatsnew mqr-*.aab
+        run: scripts/play.sh upload whatsnew mqr-*.aab

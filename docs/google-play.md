@@ -4,7 +4,7 @@ Actions → build → Run workflow で `main` とバージョンを指定する�
 
 - 認証は Workload Identity Federation（WIF）。JSON 鍵などの長期の鍵は作らず、Secrets にも何も保存しない
 - 実行のたびに GitHub の OIDC トークンを Google の短命トークン（10 分）に交換する。期限切れの更新作業はない
-- サードパーティのアクションは使わない。処理は `scripts/play_upload.py`（Python 標準ライブラリのみ）
+- サードパーティのアクションは使わない。処理は `scripts/play.sh`（bash + curl + jq のみ。いずれもランナーに標準搭載）
 - 下の Variables が未設定なら `play` ジョブはスキップされ、GitHub リリースだけが作られる
 
 ## 1. Google Cloud
