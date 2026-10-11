@@ -80,5 +80,4 @@ echo "GCP_SERVICE_ACCOUNT=$SA"
 ## 注意
 
 - GitHub リリースの APK（リポジトリの鍵で署名）と Play 版（Google の鍵で再署名）は署名が異なるため、相互に上書きインストールできない
-- Play へのアップロードは Run workflow でのリリース時だけ。`v*` タグの push では行わない
 - `play` ジョブだけが失敗した場合は **Re-run failed jobs** で再実行できる（同じ AAB・同じ `versionCode` を使う）。ワークフロー全体の再実行は GitHub リリースが既に存在するため失敗する
