@@ -18,6 +18,10 @@
 - リリース手順と署名鍵: [docs/release.md](docs/release.md)
 - Google Play へのアップロード設定: [docs/google-play.md](docs/google-play.md)
 
+## 更新履歴
+
+[CHANGELOG.md](CHANGELOG.md)
+
 ## プライバシー
 
 個人情報を収集・送信しません。詳細は [PRIVACY.md](PRIVACY.md)（Google Play のプライバシーポリシー URL にも使用）。
