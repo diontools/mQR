@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="500" viewBox="0 0 1024 500">
+  <rect width="1024" height="500" fill="#fff"/>
+  <!-- 図形は app/src/main/res/drawable/ic_fg.xml と同じ（6 倍） -->
+  <path transform="translate(-90 -74) scale(6)" fill="#000" fill-rule="evenodd" d="M30,30h21v21h-21z M33,33v15h15v-15z M36,36h9v9h-9z M57,30h21v21h-21z M60,33v15h15v-15z M63,36h9v9h-9z M30,57h21v21h-21z M33,60v15h15v-15z M36,63h9v9h-9z M57,57h6v6h-6z M66,63h6v6h-6z M72,57h6v6h-6z M57,72h6v6h-6z M72,72h6v6h-6z"/>
+  <g font-family="DejaVu Sans, sans-serif">
+    <text x="440" y="250" font-size="120" font-weight="bold" fill="#000">mQR</text>
+    <text x="444" y="315" font-size="34" fill="#444">QR code reader &amp; generator</text>
+  </g>
+</svg>
