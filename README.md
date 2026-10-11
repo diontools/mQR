@@ -17,6 +17,8 @@
 
 Actions → build → Run workflow で `main` を選び（main 以外ではエラー）、バージョン（例: `1.0.0`）を入力すると、GitHub Actions がビルドし、タグ `v1.0.0` を作成して APK をリリースに添付します。リリース本文は `whatsnew/*.txt`（リリース前の PR で更新する）。タグを手動で push してもリリースは作成されません。
 
+「タグと GitHub リリースを作る」のチェックを外すと、タグとリリースを作らずに Google Play にだけアップロードします。versionCode は実行ごとに増える（`GITHUB_RUN_NUMBER`）ので、同じバージョンのまま何度でも内部テストに出せます。本番に出す版だけチェックを入れて実行し、Play Console で昇格します。
+
 ```sh
 gh workflow run build.yml -R diontools/mQR --ref main -f version=1.0.0
 ```

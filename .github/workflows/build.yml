@@ -9,6 +9,10 @@ on:
       version:
         description: 'リリースするバージョン (例: 0.1.0)。空ならビルドのみ'
         required: false
+      github_release:
+        description: 'タグと GitHub リリースを作る（外すと Google Play にだけ送る。同じバージョンで何度でも内部テストに出せる）'
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -81,7 +85,7 @@ jobs:
           path: mqr-${{ env.VERSION }}.aab
 
       - name: Release
-        if: inputs.version != ''
+        if: inputs.version != '' && inputs.github_release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

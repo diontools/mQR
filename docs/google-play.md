@@ -6,6 +6,7 @@ Actions → build → Run workflow で `main` とバージョンを指定する�
 - 実行のたびに GitHub の OIDC トークンを Google の短命トークン（10 分）に交換する。期限切れの更新作業はない
 - サードパーティのアクションは使わない。処理は `scripts/play.sh`（bash + curl + jq のみ。いずれもランナーに標準搭載）
 - 下の Variables が未設定なら `play` ジョブはスキップされ、GitHub リリースだけが作られる
+- 「タグと GitHub リリースを作る」を外して実行すると Play にだけ送る。versionName が同じでも versionCode（`GITHUB_RUN_NUMBER`）は毎回増えるため、内部テストを同じバージョンで繰り返し更新できる
 
 ## 1. Google Cloud
 
@@ -80,4 +81,4 @@ echo "GCP_SERVICE_ACCOUNT=$SA"
 ## 注意
 
 - GitHub リリースの APK（リポジトリの鍵で署名）と Play 版（Google の鍵で再署名）は署名が異なるため、相互に上書きインストールできない
-- `play` ジョブだけが失敗した場合は **Re-run failed jobs** で再実行できる（同じ AAB・同じ `versionCode` を使う）。ワークフロー全体の再実行は GitHub リリースが既に存在するため失敗する
+- `play` ジョブだけが失敗した場合は **Re-run failed jobs** で再実行できる（同じ AAB・同じ `versionCode` を使う）。ワークフロー全体の再実行は GitHub リリースが既に存在するため失敗し、同じ run number なので versionCode も重複する。作り直すときは新しく Run workflow する
