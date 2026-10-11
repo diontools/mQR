@@ -16,6 +16,7 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
+import android.hardware.display.DisplayManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -54,10 +55,30 @@ public class ScanActivity extends Activity implements TextureView.SurfaceTexture
     private HandlerThread thread;
     private Handler handler;
     private Camera camera; // handler スレッドでのみ触る
+    private final Camera.CameraInfo info = new Camera.CameraInfo(); // 同上
     private int width, height;
+    private int fitW, fitH; // 回転後のプレビューの大きさ。UI スレッドでのみ触る
     private volatile int crop; // 読み取り枠のフレーム上での一辺 (px)。0 は未確定
     private volatile boolean paused;
     private boolean asked; // 拒否後に onResume で再要求し続けないため
+
+    // 横向きのまま 180° 回したときは再生成されないので、画面の回転を監視する
+    private final DisplayManager.DisplayListener displayListener = new DisplayManager.DisplayListener() {
+        @Override
+        public void onDisplayChanged(int id) {
+            handler.post(() -> {
+                if (camera != null) camera.setDisplayOrientation(displayOrientation());
+            });
+        }
+
+        @Override
+        public void onDisplayAdded(int id) {
+        }
+
+        @Override
+        public void onDisplayRemoved(int id) {
+        }
+    };
 
     @Override
     protected void onCreate(Bundle state) {
@@ -96,6 +117,7 @@ public class ScanActivity extends Activity implements TextureView.SurfaceTexture
         thread = new HandlerThread("camera");
         thread.start();
         handler = new Handler(thread.getLooper());
+        getSystemService(DisplayManager.class).registerDisplayListener(displayListener, null);
         if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
             startCamera();
         } else if (!asked) {
@@ -107,6 +129,7 @@ public class ScanActivity extends Activity implements TextureView.SurfaceTexture
     @Override
     protected void onPause() {
         super.onPause();
+        getSystemService(DisplayManager.class).unregisterDisplayListener(displayListener);
         handler.post(() -> {
             if (camera != null) {
                 camera.setPreviewCallbackWithBuffer(null);
@@ -129,7 +152,6 @@ public class ScanActivity extends Activity implements TextureView.SurfaceTexture
             SurfaceTexture surface = preview.getSurfaceTexture();
             if (camera != null || surface == null) return;
             try {
-                Camera.CameraInfo info = new Camera.CameraInfo();
                 int id = 0;
                 for (; id < Camera.getNumberOfCameras(); id++) {
                     Camera.getCameraInfo(id, info);
@@ -151,14 +173,20 @@ public class ScanActivity extends Activity implements TextureView.SurfaceTexture
                 camera.setParameters(p);
                 width = best.width;
                 height = best.height;
-                // 縦画面固定なので画面回転は 0 として扱える
-                boolean rotated = info.orientation % 180 != 0;
-                camera.setDisplayOrientation(info.orientation);
+                // 大画面では縦固定が無視される (Android 16 以降) ので画面の回転も考慮する
+                int orientation = displayOrientation();
+                boolean rotated = orientation % 180 != 0;
+                camera.setDisplayOrientation(orientation);
                 camera.setPreviewTexture(surface);
                 camera.setPreviewCallbackWithBuffer(this);
                 camera.addCallbackBuffer(new byte[width * height * 3 / 2]);
                 if (!paused) camera.startPreview(); // 結果表示中なら閉じるまで止めておく
-                runOnUiThread(() -> fitPreview(rotated ? height : width, rotated ? width : height));
+                int w = rotated ? height : width, h = rotated ? width : height;
+                runOnUiThread(() -> {
+                    fitW = w;
+                    fitH = h;
+                    fitPreview();
+                });
             } catch (Exception e) {
                 if (camera != null) camera.release();
                 camera = null;
@@ -168,7 +196,9 @@ public class ScanActivity extends Activity implements TextureView.SurfaceTexture
     }
 
     // アスペクト比を保ったまま画面いっぱいに表示する (center crop)
-    private void fitPreview(int w, int h) {
+    private void fitPreview() {
+        int w = fitW, h = fitH;
+        if (w == 0) return;
         float vw = preview.getWidth(), vh = preview.getHeight();
         float scale = Math.max(vw / w, vh / h);
         Matrix m = new Matrix();
@@ -176,6 +206,14 @@ public class ScanActivity extends Activity implements TextureView.SurfaceTexture
         preview.setTransform(m);
         // 枠は中央の正方形なので、回転に関係なくフレーム中央の正方形に対応する
         crop = Math.min((int) (Math.min(vw, vh) * SCAN_RATIO / scale), Math.min(w, h));
+    }
+
+    // カメラの取り付け角度と画面の回転から、プレビューの表示角度を求める
+    private int displayOrientation() {
+        int degrees = getWindowManager().getDefaultDisplay().getRotation() * 90;
+        return info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT
+                ? (360 - (info.orientation + degrees) % 360) % 360 // 前面は鏡像になる
+                : (info.orientation - degrees + 360) % 360;
     }
 
     // 読み取り枠の外側を暗く表示する
@@ -278,6 +316,7 @@ public class ScanActivity extends Activity implements TextureView.SurfaceTexture
     }
 
     private void showResult(String text) {
+        if (isFinishing() || isDestroyed()) return; // 読み取り中に閉じられた
         preview.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
         AlertDialog.Builder b = new AlertDialog.Builder(this)
                 .setMessage(text)
@@ -320,6 +359,7 @@ public class ScanActivity extends Activity implements TextureView.SurfaceTexture
 
     @Override
     public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int w, int h) {
+        fitPreview();
     }
 
     @Override

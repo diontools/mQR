@@ -45,6 +45,7 @@ public class GenerateActivity extends Activity {
         image.setBackgroundColor(Color.WHITE);
 
         input = new EditText(this);
+        input.setId(100); // ID がないと再生成時（回転など）に入力が復元されない
         input.setHint(R.string.hint);
         input.setMaxLines(4);
 
@@ -142,14 +143,15 @@ public class GenerateActivity extends Activity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode != REQ_SAVE || resultCode != RESULT_OK || data == null || data.getData() == null || qr == null) return;
-        int scale = Math.max(1, 1024 / qr.getWidth());
-        Bitmap big = Bitmap.createScaledBitmap(qr, qr.getWidth() * scale, qr.getHeight() * scale, false);
-        boolean ok;
-        try (OutputStream out = getContentResolver().openOutputStream(data.getData())) {
-            ok = big.compress(Bitmap.CompressFormat.PNG, 100, out);
-        } catch (Exception e) {
-            ok = false;
+        if (requestCode != REQ_SAVE || resultCode != RESULT_OK || data == null || data.getData() == null) return;
+        boolean ok = false; // qr が無いと空のファイルだけ作られるので失敗を知らせる
+        if (qr != null) {
+            int scale = Math.max(1, 1024 / qr.getWidth());
+            Bitmap big = Bitmap.createScaledBitmap(qr, qr.getWidth() * scale, qr.getHeight() * scale, false);
+            try (OutputStream out = getContentResolver().openOutputStream(data.getData())) {
+                ok = big.compress(Bitmap.CompressFormat.PNG, 100, out);
+            } catch (Exception ignored) {
+            }
         }
         Toast.makeText(this, ok ? R.string.done : R.string.failed, Toast.LENGTH_SHORT).show();
     }
