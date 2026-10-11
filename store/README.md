@@ -1,4 +1,16 @@
-# Google Play 掲載情報の画像
+# Google Play 掲載情報
+
+## テキスト
+
+`listing/<言語>/` の内容を Play Console の「メインのストアの掲載情報」に貼り付ける（ja-JP / en-US）。
+
+| ファイル | 項目 | 上限 |
+|---|---|---|
+| `title.txt` | アプリ名 | 30 文字 |
+| `short-description.txt` | 簡単な説明 | 80 文字 |
+| `full-description.txt` | 詳しい説明 | 4000 文字 |
+
+## 画像
 
 | ファイル | 用途 | サイズ |
 |---|---|---|
