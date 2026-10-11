@@ -43,6 +43,10 @@ keytool -genkeypair -v -keystore release.jks -keyalg RSA -keysize 4096 -validity
 
 Run workflow でのリリース時に AAB を Google Play にアップロードできます（鍵を保存しない Workload Identity Federation 方式）。設定手順は [docs/google-play.md](docs/google-play.md)。
 
+## プライバシー
+
+個人情報を収集・送信しません。詳細は [PRIVACY.md](PRIVACY.md)（Google Play のプライバシーポリシー URL にも使用）。
+
 ## ライセンス
 
 [MIT](LICENSE)。同梱しているサードパーティ ソフトウェアのライセンスは [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
