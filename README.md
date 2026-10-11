@@ -26,14 +26,17 @@ git tag v1.0.0 && git push origin v1.0.0
 
 ### 署名鍵
 
-リポジトリの Secrets に以下を設定します。未設定のときはデバッグ鍵で署名されるため、上書きアップデートができません。
+リポジトリの Actions の Secrets と Variables に以下を設定します。未設定のときはデバッグ鍵で署名されるため、上書きアップデートができません。
 
 | Secret | 内容 |
 |---|---|
 | `SIGNING_KEYSTORE_BASE64` | `base64 -w0 release.jks` の出力 |
 | `SIGNING_STORE_PASSWORD` | キーストアのパスワード |
-| `SIGNING_KEY_ALIAS` | 鍵のエイリアス |
 | `SIGNING_KEY_PASSWORD` | 鍵のパスワード |
+
+| Variable | 内容 |
+|---|---|
+| `SIGNING_KEY_ALIAS` | 鍵のエイリアス（秘密ではないため Variable にする。Secret にするとログ中の同じ文字列が伏せ字になる） |
 
 ```sh
 keytool -genkeypair -v -keystore release.jks -keyalg RSA -keysize 4096 -validity 10000 -alias mqr
