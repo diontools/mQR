@@ -1,7 +1,8 @@
 <resources>
     <string name="app_name">mQR</string>
-    <string name="generate">Generate QR</string>
-    <string name="image">Image</string>
+    <string name="generate">Create QR code</string>
+    <string name="guide">Fit the QR code in the frame</string>
+    <string name="image">Scan image</string>
     <string name="save">Save</string>
     <string name="copy">Copy</string>
     <string name="share">Share</string>
