@@ -24,7 +24,7 @@ gcloud services enable \
 
 # Workload Identity プールと GitHub 用プロバイダ
 gcloud iam workload-identity-pools create github --location=global
-gcloud iam workload-identity-pools providers create-oidc mqr \
+gcloud iam workload-identity-pools providers create-oidc mqr-github \
   --location=global --workload-identity-pool=github \
   --issuer-uri=https://token.actions.githubusercontent.com \
   --attribute-mapping='google.subject=assertion.sub,attribute.repository_id=assertion.repository_id,attribute.environment=assertion.environment,attribute.ref=assertion.ref' \
@@ -39,7 +39,7 @@ gcloud iam service-accounts add-iam-policy-binding "$SA" \
   --role=roles/iam.workloadIdentityUser \
   --member="principalSet://iam.googleapis.com/projects/$PROJECT_NUMBER/locations/global/workloadIdentityPools/github/attribute.repository_id/$REPO_ID"
 
-echo "GCP_WIF_PROVIDER=projects/$PROJECT_NUMBER/locations/global/workloadIdentityPools/github/providers/mqr"
+echo "GCP_WIF_PROVIDER=projects/$PROJECT_NUMBER/locations/global/workloadIdentityPools/github/providers/mqr-github"
 echo "GCP_SERVICE_ACCOUNT=$SA"
 ```
 
