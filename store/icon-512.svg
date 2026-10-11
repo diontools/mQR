@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!-- 図形は app/src/main/res/drawable/ic_fg.xml と同じ（viewport 108 を 6 倍して中央に配置） -->
+  <rect width="512" height="512" fill="#fff"/>
+  <path transform="translate(-68 -68) scale(6)" fill="#000" fill-rule="evenodd" d="M30,30h21v21h-21z M33,33v15h15v-15z M36,36h9v9h-9z M57,30h21v21h-21z M60,33v15h15v-15z M63,36h9v9h-9z M30,57h21v21h-21z M33,60v15h15v-15z M36,63h9v9h-9z M57,57h6v6h-6z M66,63h6v6h-6z M72,57h6v6h-6z M57,72h6v6h-6z M72,72h6v6h-6z"/>
+</svg>
