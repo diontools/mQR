@@ -1,0 +1,22 @@
+mQR is a QR code scanner and generator built with the fewest permissions and the smallest size possible.
+
+■ Scan
+- Just point the camera. Only the frame at the center of the screen is recognized, so nearby codes are never picked up by mistake
+- The camera stops automatically after a scan
+- Scan saved images such as screenshots, without any storage permission
+- Copy the result, share it, or open it in your browser (http / https only)
+
+■ Create
+- Create QR codes from text or URLs
+- Choose the error correction level (L / M / Q / H)
+- Save as a PNG anywhere you like, or share it
+- Create a QR code directly from the Share menu or text selection menu of other apps
+
+■ Privacy
+- The only permission is the camera. The app has no Internet permission and never communicates with external servers
+- No ads, no analytics, no crash reporting
+- Scanned content and entered text are never stored
+
+■ Open source
+The source code is available under the MIT License.
+https://github.com/diontools/mQR

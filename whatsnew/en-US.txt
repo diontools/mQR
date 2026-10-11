@@ -1,2 +1,6 @@
-You can now choose the QR code error correction level (L/M/Q/H) when generating. The default is L (previously fixed at M).
-Redesigned the scan screen buttons with clearer labels ("Scan image", "Create QR code") and added a guide below the frame.
+First release.
+- Scan QR codes with the camera (only inside the frame at the center)
+- Scan QR codes from image files
+- Create QR codes from text or URLs and save them as PNG (error correction level L/M/Q/H)
+- Create QR codes from the Share menu or text selection menu of other apps
+Requires only the camera permission and never connects to the Internet.

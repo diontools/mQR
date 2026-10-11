@@ -1,0 +1,1 @@
+mQR - QR code reader
