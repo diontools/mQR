@@ -40,7 +40,7 @@ jobs:
       - name: Take screenshots
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 37.0
+          api-level: '37.0'
           target: google_apis
           arch: x86_64
           script: scripts/screenshots.sh screenshots
