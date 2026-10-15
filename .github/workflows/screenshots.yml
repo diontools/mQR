@@ -40,13 +40,9 @@ jobs:
       - name: Take screenshots
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: '37.0'
+          api-level: 35
           target: google_apis
           arch: x86_64
-          ram-size: 4096M
-          disk-size: 6G
-          # API 37 は swiftshader_indirect（既定）だと surfaceflinger が落ちる
-          emulator-options: -no-window -gpu guest -no-snapshot -noaudio -no-boot-anim
           script: scripts/screenshots.sh screenshots
 
       - uses: actions/upload-artifact@v7
