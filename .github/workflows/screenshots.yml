@@ -43,6 +43,8 @@ jobs:
           api-level: '37.0'
           target: google_apis
           arch: x86_64
+          ram-size: 4096M
+          disk-size: 6G
           script: scripts/screenshots.sh screenshots
 
       - uses: actions/upload-artifact@v7
