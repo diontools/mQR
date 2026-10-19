@@ -17,6 +17,7 @@
 
 - リリース手順と署名鍵: [docs/release.md](docs/release.md)
 - Google Play へのアップロード設定: [docs/google-play.md](docs/google-play.md)
+- 作業予定: [docs/todo.md](docs/todo.md)
 
 ## 更新履歴
 
