@@ -89,9 +89,14 @@ public class ScanActivity extends Activity implements TextureView.SurfaceTexture
         // 読み取り枠の外側と同じ暗さの帯に、左右 2 等分の文字ボタンを置く
         LinearLayout bar = new LinearLayout(this);
         bar.setBackgroundColor(DIM);
-        bar.addView(button(R.string.image, () -> startActivityForResult(
-                new Intent(Intent.ACTION_GET_CONTENT).setType("image/*").addCategory(Intent.CATEGORY_OPENABLE), REQ_IMAGE)),
-                new LinearLayout.LayoutParams(0, -2, 1));
+        bar.addView(button(R.string.image, () -> {
+            try {
+                startActivityForResult(new Intent(Intent.ACTION_GET_CONTENT)
+                        .setType("image/*").addCategory(Intent.CATEGORY_OPENABLE), REQ_IMAGE);
+            } catch (ActivityNotFoundException e) { // ファイル選択画面が無い端末
+                toast(R.string.failed);
+            }
+        }), new LinearLayout.LayoutParams(0, -2, 1));
         bar.addView(button(R.string.generate, () -> startActivity(new Intent(this, GenerateActivity.class))),
                 new LinearLayout.LayoutParams(0, -2, 1));
 
@@ -327,9 +332,10 @@ public class ScanActivity extends Activity implements TextureView.SurfaceTexture
                 .setNeutralButton(R.string.share, (d, w) -> startActivity(Intent.createChooser(
                         new Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text), null)));
         // 任意の intent: スキーム等を起動させないため http/https のみ開く
-        Uri uri = Uri.parse(text.trim());
+        // インテントフィルタの照合は大文字小文字を区別するので、HTTPS:// などはスキームを小文字にする
+        Uri uri = Uri.parse(text.trim()).normalizeScheme();
         String scheme = uri.getScheme();
-        if ("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme)) {
+        if ("http".equals(scheme) || "https".equals(scheme)) {
             b.setNegativeButton(R.string.open, (d, w) -> {
                 try {
                     startActivity(new Intent(Intent.ACTION_VIEW, uri).addCategory(Intent.CATEGORY_BROWSABLE));

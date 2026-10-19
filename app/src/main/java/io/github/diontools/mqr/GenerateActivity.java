@@ -1,6 +1,7 @@
 package io.github.diontools.mqr;
 
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -82,8 +83,13 @@ public class GenerateActivity extends Activity {
         Button save = new Button(this);
         save.setText(R.string.save);
         save.setOnClickListener(v -> {
-            if (qr != null) startActivityForResult(new Intent(Intent.ACTION_CREATE_DOCUMENT)
-                    .addCategory(Intent.CATEGORY_OPENABLE).setType("image/png").putExtra(Intent.EXTRA_TITLE, "qr.png"), REQ_SAVE);
+            if (qr == null) return;
+            try {
+                startActivityForResult(new Intent(Intent.ACTION_CREATE_DOCUMENT)
+                        .addCategory(Intent.CATEGORY_OPENABLE).setType("image/png").putExtra(Intent.EXTRA_TITLE, "qr.png"), REQ_SAVE);
+            } catch (ActivityNotFoundException e) { // ファイル選択画面が無い端末
+                Toast.makeText(this, R.string.failed, Toast.LENGTH_SHORT).show();
+            }
         });
 
         LinearLayout root = new LinearLayout(this);
