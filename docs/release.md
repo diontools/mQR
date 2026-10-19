@@ -10,7 +10,7 @@ gh workflow run build.yml -R diontools/mQR --ref main -f version=1.0.0
 
 ## 署名鍵
 
-リポジトリの Actions の Secrets と Variables に以下を設定します。未設定のときはデバッグ鍵で署名されるため、上書きアップデートができません。
+リポジトリの Actions の Secrets と Variables に以下を設定します。未設定のときはデバッグ鍵で署名されるため、上書きアップデートができません。鍵を使うのはバージョンを指定した Run workflow だけで、PR と push のビルドは常にデバッグ鍵で署名します。
 
 | Secret | 内容 |
 |---|---|

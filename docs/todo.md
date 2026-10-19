@@ -40,7 +40,7 @@
 
 ## CI・ライセンスの強化策
 
-- [ ] **9. PR のビルドにも署名鍵と書き込み権限が渡る**（`.github/workflows/build.yml`）
+- [x] **9. PR のビルドにも署名鍵と書き込み権限が渡る**（`.github/workflows/build.yml`） (#25)
     - `pull_request` でも署名鍵の Secrets をデコードし、ジョブ全体に `contents: write` が付いている。フォークの PR には Secrets が渡らないので現状の危険は小さいが、GitHub リリースの APK はこの鍵で署名している
     - 対応: 鍵のデコードと書き込み権限をリリース（`workflow_dispatch` で version 指定）に限る。PR と push はデバッグ鍵で署名する
 - [ ] **10. APK に Apache License の本文が入っていない**（要検討）
