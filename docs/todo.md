@@ -23,17 +23,17 @@
 
 - [x] **3. （中）ファイル選択画面が無い端末でクラッシュする**（`ScanActivity.onCreate`、`GenerateActivity.onCreate`） (#25)
     - `ACTION_GET_CONTENT` と `ACTION_CREATE_DOCUMENT` の `ActivityNotFoundException` を捕捉し、「失敗しました」を出す
-- [ ] **4. （中）HandlerThread を `onResume` ごとに作り直している**（`ScanActivity.onResume` / `onPause`）
+- [x] **4. （中）HandlerThread を `onResume` ごとに作り直している**（`ScanActivity.onResume` / `onPause`） (#25)
     - 一時停止→再開が素早いと、前のスレッドの `release()` より先に `Camera.open()` が走り「カメラを使用できません」になり得る
     - `onRequestPermissionsResult` や停止中の `resumeScan()` が終了済みスレッドに post して警告ログが出る（動作は `onResume` で回復する）
     - 対応: スレッドを `onCreate`〜`onDestroy` の 1 本にする
-- [ ] **5. （低）大画面で回転すると結果ダイアログが消える**
+- [x] **5. （低）大画面で回転すると結果ダイアログが消える** (#25)
     - Android 16 以降は大画面で縦固定が効かず再生成され、AlertDialog が WindowLeaked になって結果が失われる
     - `asked` も保存していないので、権限を拒否した後は回転のたびに再要求とトーストが出る
     - 対応: 結果の文字列と `asked` を `onSaveInstanceState` で保存し、`onDestroy` でダイアログを閉じる
-- [ ] **6. （低）カメラを他アプリに奪われると止まったまま**
+- [x] **6. （低）カメラを他アプリに奪われると止まったまま** (#25)
     - `Camera.ErrorCallback` が無い。マルチウィンドウで奪われると次の再開までプレビューが止まる
-- [ ] **7. （低）高さの小さい画面で案内文が下の帯と重なる**（`ScanActivity.Overlay.onDraw`）
+- [x] **7. （低）高さの小さい画面で案内文が下の帯と重なる**（`ScanActivity.Overlay.onDraw`） (#25)
     - 分割画面などで、読み取り枠の下端と案内文がボタン帯にかかる。枠の配置を帯を除いた領域で計算する
 - [ ] **8. （低）毎キー入力で同期的にエンコードしている**（`GenerateActivity.update`）
     - バージョン 40 付近の長文では、古い端末で入力がもたつき得る。実機で問題が出たら、入力が止まってから生成するなどで対応する

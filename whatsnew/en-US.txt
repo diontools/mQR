@@ -1,4 +1,8 @@
 Bug fixes
-- URLs written in capitals (such as HTTPS://EXAMPLE.COM/) can now be opened
-- The app is now available on devices whose camera has no autofocus
-- Fixed a crash on devices without a file picker when scanning an image or saving
+- URLs in capitals (e.g. HTTPS://EXAMPLE.COM/) can now be opened
+- Now available on devices whose camera has no autofocus
+- Fixed a crash on devices without a file picker
+- Scan results no longer vanish when a tablet or foldable rotates
+- The camera restarts after another app in split screen used it
+- Guide text no longer overlaps the buttons on short screens
+- Fixed "Camera unavailable" when quickly returning to the app
