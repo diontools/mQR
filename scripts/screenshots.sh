@@ -35,7 +35,11 @@ for locale in "${LOCALES[@]}"; do
   adb shell cmd locale set-app-locales "$PKG" --locales "$locale"
   result=$(adb shell am instrument -w "$PKG.test/$PKG.Screenshots")
   echo "$result"
-  grep -q 'INSTRUMENTATION_CODE: -1' <<< "$result" || { echo "$locale: 撮影に失敗しました" >&2; exit 1; }
+  grep -q 'INSTRUMENTATION_CODE: -1' <<< "$result" || {
+    echo "$locale: 撮影に失敗しました" >&2
+    adb logcat -d -b crash >&2 || true
+    exit 1
+  }
   mkdir -p "$OUT/$locale"
   for name in 1-scan:scan 2-generate:generate; do
     adb exec-out run-as "$PKG" cat "files/screenshots/${name#*:}.png" > "$OUT/$locale/${name%%:*}.png"

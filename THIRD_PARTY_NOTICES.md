@@ -2,7 +2,7 @@
 
 mQR のバイナリ（APK / AAB）には次のソフトウェアが含まれています。
 
-## ZXing core 3.5.3
+## ZXing core 3.5.4
 
 - https://github.com/zxing/zxing
 - Copyright ZXing authors

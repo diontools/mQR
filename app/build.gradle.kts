@@ -6,12 +6,12 @@ fun prop(name: String): String? = (findProperty(name) as String?)?.takeIf { it.i
 
 android {
     namespace = "io.github.diontools.mqr"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "io.github.diontools.mqr"
         minSdk = 26
-        targetSdk = 36
+        targetSdk = 37
         versionCode = prop("versionCode")?.toInt() ?: 1
         versionName = prop("versionName") ?: "0.0.0-dev"
         // ストア用スクリーンショット撮影 (scripts/screenshots.sh)。テスト APK にだけ入る
@@ -62,5 +62,5 @@ android {
 }
 
 dependencies {
-    implementation("com.google.zxing:core:3.5.3")
+    implementation("com.google.zxing:core:3.5.4")
 }
