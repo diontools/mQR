@@ -6,12 +6,12 @@
 
 利用者に見える変更なので `whatsnew/*.txt` も更新する。
 
-- [x] **1. 大文字スキームの URL が「開く」で開けない**（`ScanActivity.java` の `showResult`） (#24)
+- [x] **1. 大文字スキームの URL が「開く」で開けない**（`ScanActivity.java` の `showResult`） (#25)
     - 現象: `HTTPS://EXAMPLE.COM/` でも「開く」ボタンは出るが、押すと「失敗しました」になる
     - 原因: スキーム判定は `equalsIgnoreCase` だが、インテントフィルタの照合は大文字小文字を区別する。英数字モードで小さくするため大文字にした URL の QR は珍しくない
     - 対応: `Uri uri = Uri.parse(text.trim()).normalizeScheme();`
     - 確認: `HTTPS://GITHUB.COM/DIONTOOLS/MQR` の QR を読み、「開く」でブラウザが開くこと
-- [x] **2. `camera.autofocus` の uses-feature が無く、Play で配信対象が狭まる**（`AndroidManifest.xml`） (#24)
+- [x] **2. `camera.autofocus` の uses-feature が無く、Play で配信対象が狭まる**（`AndroidManifest.xml`） (#25)
     - 現象: オートフォーカスの無い端末（固定焦点カメラ、一部のタブレットや Chromebook）が配信対象外になる
     - 原因: `CAMERA` 権限は `android.hardware.camera` と `android.hardware.camera.autofocus` を暗黙に必須にする（[uses-feature の Table 2](https://developer.android.com/guide/topics/manifest/uses-feature-element)）。宣言済みなのは前者だけ
     - 対応: `<uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />` を追加する。コードは対応モードがあるときだけ AF を使うので変更不要
@@ -21,7 +21,7 @@
 
 どれも起こりにくいか見た目の問題。3 と 4 は修正が小さい。
 
-- [x] **3. （中）ファイル選択画面が無い端末でクラッシュする**（`ScanActivity.onCreate`、`GenerateActivity.onCreate`） (#24)
+- [x] **3. （中）ファイル選択画面が無い端末でクラッシュする**（`ScanActivity.onCreate`、`GenerateActivity.onCreate`） (#25)
     - `ACTION_GET_CONTENT` と `ACTION_CREATE_DOCUMENT` の `ActivityNotFoundException` を捕捉し、「失敗しました」を出す
 - [ ] **4. （中）HandlerThread を `onResume` ごとに作り直している**（`ScanActivity.onResume` / `onPause`）
     - 一時停止→再開が素早いと、前のスレッドの `release()` より先に `Camera.open()` が走り「カメラを使用できません」になり得る
@@ -49,9 +49,11 @@
 
 ## 進め方
 
-1. 1〜3 を 1 つの PR にまとめ、`whatsnew/*.txt` と `CHANGELOG.md` を更新する（次のリリース 1.0.2 向け）
-2. 4〜7 は `ScanActivity` のライフサイクル整理として別の PR にする。実機で回転・分割画面・権限拒否を確認する
-3. 9 は CI だけの PR にする（利用者に見えないので whatsnew は不要）
+すべて `dev` に積み、`dev` → `main` の PR（#25、次のリリース 1.0.2）でまとめてリリースする。
+
+1. 1〜3 を対応し、`whatsnew/*.txt` と `CHANGELOG.md` を更新する
+2. 4〜7 を `ScanActivity` のライフサイクル整理として対応する。実機で回転・分割画面・権限拒否を確認する
+3. 9 は CI だけの変更（利用者に見えないので whatsnew は不要）
 4. 8 と 10 は必要になったら対応する
 
 ## 確認済みで問題なし
