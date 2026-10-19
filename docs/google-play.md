@@ -1,12 +1,12 @@
 # Google Play への自動アップロード
 
-Actions → build → Run workflow で `main` とバージョンを指定すると、`play` ジョブが AAB を Google Play にアップロードします。
+Actions → build → Run workflow で `main` か `dev` とバージョンを指定すると、`play` ジョブが AAB を Google Play にアップロードします。
 
 - 認証は Workload Identity Federation（WIF）。JSON 鍵などの長期の鍵は作らず、Secrets にも何も保存しない
 - 実行のたびに GitHub の OIDC トークンを Google の短命トークン（10 分）に交換する。期限切れの更新作業はない
 - サードパーティのアクションは使わない。処理は `scripts/play.sh`（bash + curl + jq のみ。いずれもランナーに標準搭載）
 - 下の Variables が未設定なら `play` ジョブはスキップされ、GitHub リリースだけが作られる
-- 「タグと GitHub リリースを作る」を外して実行すると Play にだけ送る。versionName が同じでも versionCode（`GITHUB_RUN_NUMBER`）は毎回増えるため、内部テストを同じバージョンで繰り返し更新できる
+- `dev` から実行すると Play にだけ送る。versionName が同じでも versionCode（`GITHUB_RUN_NUMBER`）は毎回増えるため、内部テストを同じバージョンで繰り返し更新できる
 
 ## 1. Google Cloud
 
@@ -29,7 +29,7 @@ gcloud iam workload-identity-pools providers create-oidc mqr-github \
   --location=global --workload-identity-pool=github \
   --issuer-uri=https://token.actions.githubusercontent.com \
   --attribute-mapping='google.subject=assertion.sub,attribute.repository_id=assertion.repository_id,attribute.environment=assertion.environment,attribute.ref=assertion.ref' \
-  --attribute-condition="assertion.repository_id=='$REPO_ID' && assertion.environment=='play' && assertion.ref=='refs/heads/main'"
+  --attribute-condition="assertion.repository_id=='$REPO_ID' && assertion.environment=='play' && assertion.ref in ['refs/heads/main', 'refs/heads/dev']"
 
 # アップロード専用のサービスアカウント（Google Cloud 上のロールは付与しない）
 gcloud iam service-accounts create play-publisher --display-name='mQR Play publisher'
@@ -44,7 +44,9 @@ echo "GCP_WIF_PROVIDER=projects/$PROJECT_NUMBER/locations/global/workloadIdentit
 echo "GCP_SERVICE_ACCOUNT=$SA"
 ```
 
-`attribute-condition` により、トークンを発行できるのは「このリポジトリ」の「`main` ブランチ」の「`play` Environment」で動くジョブだけです。フォークや他のブランチ、PR からは使えません。
+`attribute-condition` により、トークンを発行できるのは「このリポジトリ」の「`main` か `dev` ブランチ」の「`play` Environment」で動くジョブだけです。フォークや他のブランチ、PR からは使えません。
+
+サービスアカウントの Play での権限はテスト トラックへのリリースだけなので（手順 2）、ワークフローが書き換えられても本番には出せません。
 
 ## 2. Google Play Console
 
@@ -68,7 +70,7 @@ echo "GCP_SERVICE_ACCOUNT=$SA"
 
 **Settings → Environments → `play`**（初回実行で自動作成される。事前に作ってもよい）
 
-- Deployment branches and tags: `main` のみ
+- Deployment branches and tags: `main` と `dev`
 - Required reviewers: 自分を追加すると、アップロード前に毎回承認が必要になる（任意）
 
 ## リリースノート

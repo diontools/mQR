@@ -7,12 +7,8 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'リリースするバージョン (例: 0.1.0)。空ならビルドのみ'
+        description: 'リリースするバージョン (例: 0.1.0)。空ならビルドのみ。main ではタグと GitHub リリースも作り、dev では Google Play にだけ送る（同じバージョンで何度でもテストに出せる）'
         required: false
-      github_release:
-        description: 'タグと GitHub リリースを作る（外すと Google Play にだけ送る。同じバージョンで何度でも内部テストに出せる）'
-        type: boolean
-        default: true
 
 permissions:
   contents: read
@@ -40,7 +36,11 @@ jobs:
 
       - name: Check release ref
         if: inputs.version != ''
-        run: '[ "$GITHUB_REF" = refs/heads/main ] || { echo "::error::リリースは main からのみ実行できます"; exit 1; }'
+        run: |
+          case "$GITHUB_REF" in
+            refs/heads/main | refs/heads/dev) ;;
+            *) echo "::error::リリースは main（正式リリース）か dev（Play のテスト）からのみ実行できます"; exit 1 ;;
+          esac
 
       # 署名鍵はリリースのときだけ使う。PR と push はデバッグ鍵で署名する
       - name: Decode keystore
@@ -92,9 +92,9 @@ jobs:
           path: mqr-${{ env.VERSION }}.aab
 
   release:
-    # 書き込み権限はリリースを作るこのジョブだけに付ける
+    # main からの実行だけタグと GitHub リリースを作る。書き込み権限はこのジョブだけに付ける
     needs: build
-    if: inputs.version != '' && inputs.github_release
+    if: inputs.version != '' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: write
