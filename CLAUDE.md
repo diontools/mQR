@@ -10,6 +10,10 @@
 
 ## ブランチ運用
 
-- main へ直接 push しない。作業ブランチから PR を作り、CI 成功後に squash マージする。
+- main へ直接 push しない。作業は `dev` ブランチに直接コミットし、`dev` → `main` の PR を 1 本開いておく。この PR が次のリリースの内容になる。
+- `dev` への push ごとに PR の CI が走る。利用者は手元で `dev` をチェックアウトし、`git pull` して実機確認する。
+- 手元のチェックアウトは `dev` にしておき、ワークツリーを使わずにそこで直接作業する。ワークツリーは並行作業など必要なときだけ使う。
+- ワークツリーを使うときは `dev` をローカルブランチとして持たない（持つと手元で `dev` をチェックアウトできない）。`git switch --detach origin/dev` で作業し、`git push origin HEAD:dev` で送る。
+- リリース前に CI 成功と実機確認を待って PR を squash マージし、`dev` を削除する。マージ後は新しい `main` から `dev` を作り直す（squash で履歴が食い違うため。force push はしない）。
 - リリースは Actions の Run workflow（main を選び version を指定）で行う。タグは自動で作成される。
 - 利用者に見える変更をする PR では `whatsnew/*.txt`（Play と GitHub リリースのリリースノート、各 500 文字まで）も更新する。

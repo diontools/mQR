@@ -1,5 +1,8 @@
 Bug fixes
-- Text being created no longer disappears when the screen rotates
-- Saving now shows an error instead of leaving an empty file when there is no QR code
-- Fixed the camera preview orientation on tablets and foldables shown in landscape
-- Fixed a crash when closing the app while scanning an image
+- URLs in capitals (e.g. HTTPS://EXAMPLE.COM/) can now be opened
+- Now available on devices whose camera has no autofocus
+- Fixed a crash on devices without a file picker
+- Scan results no longer vanish when a tablet or foldable rotates
+- The camera restarts after another app in split screen used it
+- Guide text no longer overlaps the buttons on short screens
+- Fixed "Camera unavailable" when quickly returning to the app

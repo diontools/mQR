@@ -60,7 +60,12 @@ public class ScanActivity extends Activity implements TextureView.SurfaceTexture
     private int fitW, fitH; // 回転後のプレビューの大きさ。UI スレッドでのみ触る
     private volatile int crop; // 読み取り枠のフレーム上での一辺 (px)。0 は未確定
     private volatile boolean paused;
+    private boolean resumed; // 停止中にカメラを開かないため。UI スレッドでのみ触る
     private boolean asked; // 拒否後に onResume で再要求し続けないため
+    private LinearLayout bar;
+    private float guideSize; // 案内文の文字の大きさ (px)
+    private AlertDialog dialog;
+    private String result; // 表示中の結果。再生成時に出し直すため保存する
 
     // 横向きのまま 180° 回したときは再生成されないので、画面の回転を監視する
     private final DisplayManager.DisplayListener displayListener = new DisplayManager.DisplayListener() {
@@ -83,15 +88,25 @@ public class ScanActivity extends Activity implements TextureView.SurfaceTexture
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
+        // 一時停止→再開が素早くても release() の後に open() するよう、スレッドは 1 本にする
+        thread = new HandlerThread("camera");
+        thread.start();
+        handler = new Handler(thread.getLooper());
+        guideSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 16, getResources().getDisplayMetrics());
         preview = new TextureView(this);
         preview.setSurfaceTextureListener(this);
 
         // 読み取り枠の外側と同じ暗さの帯に、左右 2 等分の文字ボタンを置く
-        LinearLayout bar = new LinearLayout(this);
+        bar = new LinearLayout(this);
         bar.setBackgroundColor(DIM);
-        bar.addView(button(R.string.image, () -> startActivityForResult(
-                new Intent(Intent.ACTION_GET_CONTENT).setType("image/*").addCategory(Intent.CATEGORY_OPENABLE), REQ_IMAGE)),
-                new LinearLayout.LayoutParams(0, -2, 1));
+        bar.addView(button(R.string.image, () -> {
+            try {
+                startActivityForResult(new Intent(Intent.ACTION_GET_CONTENT)
+                        .setType("image/*").addCategory(Intent.CATEGORY_OPENABLE), REQ_IMAGE);
+            } catch (ActivityNotFoundException e) { // ファイル選択画面が無い端末
+                toast(R.string.failed);
+            }
+        }), new LinearLayout.LayoutParams(0, -2, 1));
         bar.addView(button(R.string.generate, () -> startActivity(new Intent(this, GenerateActivity.class))),
                 new LinearLayout.LayoutParams(0, -2, 1));
 
@@ -101,6 +116,33 @@ public class ScanActivity extends Activity implements TextureView.SurfaceTexture
         root.addView(new Overlay());
         root.addView(bar, new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM));
         setContentView(root);
+
+        // 大画面では縦固定が効かず回転で再生成されるので、結果と権限の要求済みを引き継ぐ
+        if (state != null) {
+            asked = state.getBoolean("asked");
+            String text = state.getString("result");
+            if (text != null) {
+                paused = true;
+                showDialog(text);
+            }
+        }
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle state) {
+        super.onSaveInstanceState(state);
+        state.putBoolean("asked", asked);
+        state.putString("result", result);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (dialog != null) {
+            dialog.setOnDismissListener(null); // 再開はしない
+            dialog.dismiss(); // 閉じないと WindowLeaked になる
+        }
+        thread.quitSafely();
     }
 
     private Button button(int text, Runnable action) {
@@ -114,9 +156,7 @@ public class ScanActivity extends Activity implements TextureView.SurfaceTexture
     @Override
     protected void onResume() {
         super.onResume();
-        thread = new HandlerThread("camera");
-        thread.start();
-        handler = new Handler(thread.getLooper());
+        resumed = true;
         getSystemService(DisplayManager.class).registerDisplayListener(displayListener, null);
         if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
             startCamera();
@@ -129,15 +169,24 @@ public class ScanActivity extends Activity implements TextureView.SurfaceTexture
     @Override
     protected void onPause() {
         super.onPause();
+        resumed = false;
         getSystemService(DisplayManager.class).unregisterDisplayListener(displayListener);
-        handler.post(() -> {
-            if (camera != null) {
-                camera.setPreviewCallbackWithBuffer(null);
-                camera.release();
-                camera = null;
-            }
-        });
-        thread.quitSafely();
+        handler.post(this::releaseCamera);
+    }
+
+    // マルチウィンドウでカメラを他のアプリに奪われた後、こちらが最前面に戻ったら開き直す
+    @Override
+    public void onTopResumedActivityChanged(boolean top) {
+        if (top && checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) startCamera();
+    }
+
+    // handler スレッドで呼ぶ
+    private void releaseCamera() {
+        if (camera != null) {
+            camera.setPreviewCallbackWithBuffer(null);
+            camera.release();
+            camera = null;
+        }
     }
 
     @Override
@@ -147,6 +196,7 @@ public class ScanActivity extends Activity implements TextureView.SurfaceTexture
     }
 
     private void startCamera() {
+        if (!resumed) return; // 再開時に onResume から呼ばれる
         // カメラのコールバックは open() したスレッドの Looper で届く
         handler.post(() -> {
             SurfaceTexture surface = preview.getSurfaceTexture();
@@ -160,6 +210,8 @@ public class ScanActivity extends Activity implements TextureView.SurfaceTexture
                 if (id == Camera.getNumberOfCameras()) id = 0;
                 Camera.getCameraInfo(id, info);
                 camera = Camera.open(id);
+                // 他のアプリに奪われたときなどは解放し、onTopResumedActivityChanged で開き直す
+                camera.setErrorCallback((error, cam) -> releaseCamera());
 
                 Camera.Parameters p = camera.getParameters();
                 Camera.Size best = null;
@@ -205,7 +257,14 @@ public class ScanActivity extends Activity implements TextureView.SurfaceTexture
         m.setScale(w * scale / vw, h * scale / vh, vw / 2, vh / 2);
         preview.setTransform(m);
         // 枠は中央の正方形なので、回転に関係なくフレーム中央の正方形に対応する
-        crop = Math.min((int) (Math.min(vw, vh) * SCAN_RATIO / scale), Math.min(w, h));
+        crop = Math.min((int) (frameSize((int) vw, (int) vh) / scale), Math.min(w, h));
+    }
+
+    // 読み取り枠の一辺。高さの小さい画面では、枠の下の案内文が下の帯にかからないよう小さくする
+    private int frameSize(int w, int h) {
+        int s = (int) (Math.min(w, h) * SCAN_RATIO);
+        int room = h - 2 * (bar.getHeight() + (int) (guideSize * 2.5f)); // 案内文は枠の下端から 2 文字分下に出す
+        return Math.min(s, Math.max(room, Math.min(w, h) / 3)); // これより小さいと読み取りにくいので重なりを許す
     }
 
     // カメラの取り付け角度と画面の回転から、プレビューの表示角度を求める
@@ -231,13 +290,13 @@ public class ScanActivity extends Activity implements TextureView.SurfaceTexture
             frame.setStrokeWidth(2 * getResources().getDisplayMetrics().density);
             guide.setColor(0xffffffff);
             guide.setTextAlign(Paint.Align.CENTER);
-            guide.setTextSize(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 16, getResources().getDisplayMetrics()));
+            guide.setTextSize(guideSize);
         }
 
         @Override
         protected void onDraw(Canvas c) {
             int w = getWidth(), h = getHeight();
-            int s = (int) (Math.min(w, h) * SCAN_RATIO);
+            int s = frameSize(w, h);
             int l = (w - s) / 2, t = (h - s) / 2, r = l + s, b = t + s;
             c.drawRect(0, 0, w, t, dim);
             c.drawRect(0, b, w, h, dim);
@@ -318,18 +377,28 @@ public class ScanActivity extends Activity implements TextureView.SurfaceTexture
     private void showResult(String text) {
         if (isFinishing() || isDestroyed()) return; // 読み取り中に閉じられた
         preview.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+        showDialog(text);
+    }
+
+    private void showDialog(String text) {
+        result = text;
         AlertDialog.Builder b = new AlertDialog.Builder(this)
                 .setMessage(text)
-                .setOnDismissListener(d -> resumeScan())
+                .setOnDismissListener(d -> {
+                    dialog = null;
+                    result = null;
+                    resumeScan();
+                })
                 .setPositiveButton(R.string.copy, (d, w) -> {
                     getSystemService(ClipboardManager.class).setPrimaryClip(ClipData.newPlainText(null, text));
                 })
                 .setNeutralButton(R.string.share, (d, w) -> startActivity(Intent.createChooser(
                         new Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text), null)));
         // 任意の intent: スキーム等を起動させないため http/https のみ開く
-        Uri uri = Uri.parse(text.trim());
+        // インテントフィルタの照合は大文字小文字を区別するので、HTTPS:// などはスキームを小文字にする
+        Uri uri = Uri.parse(text.trim()).normalizeScheme();
         String scheme = uri.getScheme();
-        if ("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme)) {
+        if ("http".equals(scheme) || "https".equals(scheme)) {
             b.setNegativeButton(R.string.open, (d, w) -> {
                 try {
                     startActivity(new Intent(Intent.ACTION_VIEW, uri).addCategory(Intent.CATEGORY_BROWSABLE));
@@ -338,7 +407,7 @@ public class ScanActivity extends Activity implements TextureView.SurfaceTexture
                 }
             });
         }
-        b.show();
+        dialog = b.show();
     }
 
     private void resumeScan() {
