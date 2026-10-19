@@ -43,9 +43,11 @@
 - [x] **9. PR のビルドにも署名鍵と書き込み権限が渡る**（`.github/workflows/build.yml`） (#25)
     - `pull_request` でも署名鍵の Secrets をデコードし、ジョブ全体に `contents: write` が付いている。フォークの PR には Secrets が渡らないので現状の危険は小さいが、GitHub リリースの APK はこの鍵で署名している
     - 対応: 鍵のデコードと書き込み権限をリリース（`workflow_dispatch` で version 指定）に限る。PR と push はデバッグ鍵で署名する
-- [ ] **10. APK に Apache License の本文が入っていない**（要検討）
-    - `META-INF/**` を除外しており、アプリ内にもライセンス表示が無い。Apache-2.0 §4(a) を厳密に読むと配布物に本文を添える必要がある
-    - 現状は GitHub リリースの `THIRD_PARTY_NOTICES.md` とストア説明のリンクで示している。サイズとの兼ね合いで、対応するかを決める
+- [x] **10. APK に Apache License の本文が入っていない**（入れない方針に決定）
+    - アプリ内にライセンス表示が無い。Apache-2.0 §4(a) を厳密に読むと配布物に本文を添える必要がある。GitHub リリースは `THIRD_PARTY_NOTICES.md` を添付しているので満たすが、Play 経由はストア説明のリンクだけになる
+    - `META-INF/**` の除外は無関係。ZXing core 3.5.4 の jar はもともと LICENSE を含まない
+    - NOTICE は不要。記載は Barcode4J（DataMatrix）と JCommander（`javase`）だけで、使っているのは `qrcode` 系なので R8 後の APK に含まれない
+    - 本文を入れると圧縮後で約 4 KB（1.0.1 の APK 55 KB の約 8%）増える。ファイルサイズを最小にするため入れず、現状の示し方を続ける
 
 ## 進め方
 
@@ -54,7 +56,7 @@
 1. 1〜3 を対応し、`whatsnew/*.txt` と `CHANGELOG.md` を更新する
 2. 4〜7 を `ScanActivity` のライフサイクル整理として対応する。実機で回転・分割画面・権限拒否を確認する
 3. 9 は CI だけの変更（利用者に見えないので whatsnew は不要）
-4. 8 と 10 は必要になったら対応する
+4. 8 は必要になったら対応する。10 は対応しない
 
 ## 確認済みで問題なし
 
