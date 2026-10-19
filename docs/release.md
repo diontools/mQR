@@ -1,11 +1,21 @@
 # リリース
 
-Actions → build → Run workflow で `main` を選び（main 以外ではエラー）、バージョン（例: `1.0.0`）を入力すると、GitHub Actions がビルドし、タグ `v1.0.0` を作成して APK をリリースに添付します。リリース本文は `whatsnew/*.txt`（リリース前の PR で更新する）。タグを手動で push してもリリースは作成されません。
+Actions → build → Run workflow でブランチとバージョン（例: `1.0.0`）を指定すると、GitHub Actions がビルドして Google Play にアップロードします。ブランチで動作が変わります（`main` と `dev` 以外ではエラー）。
 
-「タグと GitHub リリースを作る」のチェックを外すと、タグとリリースを作らずに Google Play にだけアップロードします。versionCode は実行ごとに増える（`GITHUB_RUN_NUMBER`）ので、同じバージョンのまま何度でも内部テストに出せます。本番に出す版だけチェックを入れて実行し、Play Console で昇格します。
+| ブランチ | 動作 |
+|---|---|
+| `dev` | Google Play にだけ送る。タグと GitHub リリースは作らない |
+| `main` | タグ `v1.0.0` を作成し、APK を添付した GitHub リリースを作る。Google Play にも送る |
+
+versionCode は実行ごとに増える（`GITHUB_RUN_NUMBER`）ので、`dev` からは同じバージョンのまま何度でも内部テストに出せます。リリース本文は `whatsnew/*.txt`。タグを手動で push してもリリースは作成されません。
+
+1. `dev` から次のバージョンで実行し、Play の内部テストで実機確認する。修正したら `dev` に積んで同じバージョンで再実行する
+2. 問題が無ければ `CHANGELOG.md` の版を確定し、`dev` → `main` の PR を squash マージする
+3. `main` から同じバージョンで実行し、Play Console でその版を本番に昇格する
 
 ```sh
-gh workflow run build.yml -R diontools/mQR --ref main -f version=1.0.0
+gh workflow run build.yml -R diontools/mQR --ref dev -f version=1.0.0   # Play のテスト
+gh workflow run build.yml -R diontools/mQR --ref main -f version=1.0.0  # 正式リリース
 ```
 
 ## 署名鍵
