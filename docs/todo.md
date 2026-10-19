@@ -6,12 +6,12 @@
 
 利用者に見える変更なので `whatsnew/*.txt` も更新する。
 
-- [ ] **1. 大文字スキームの URL が「開く」で開けない**（`ScanActivity.java` の `showResult`）
+- [x] **1. 大文字スキームの URL が「開く」で開けない**（`ScanActivity.java` の `showResult`） (#24)
     - 現象: `HTTPS://EXAMPLE.COM/` でも「開く」ボタンは出るが、押すと「失敗しました」になる
     - 原因: スキーム判定は `equalsIgnoreCase` だが、インテントフィルタの照合は大文字小文字を区別する。英数字モードで小さくするため大文字にした URL の QR は珍しくない
     - 対応: `Uri uri = Uri.parse(text.trim()).normalizeScheme();`
     - 確認: `HTTPS://GITHUB.COM/DIONTOOLS/MQR` の QR を読み、「開く」でブラウザが開くこと
-- [ ] **2. `camera.autofocus` の uses-feature が無く、Play で配信対象が狭まる**（`AndroidManifest.xml`）
+- [x] **2. `camera.autofocus` の uses-feature が無く、Play で配信対象が狭まる**（`AndroidManifest.xml`） (#24)
     - 現象: オートフォーカスの無い端末（固定焦点カメラ、一部のタブレットや Chromebook）が配信対象外になる
     - 原因: `CAMERA` 権限は `android.hardware.camera` と `android.hardware.camera.autofocus` を暗黙に必須にする（[uses-feature の Table 2](https://developer.android.com/guide/topics/manifest/uses-feature-element)）。宣言済みなのは前者だけ
     - 対応: `<uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />` を追加する。コードは対応モードがあるときだけ AF を使うので変更不要
@@ -21,7 +21,7 @@
 
 どれも起こりにくいか見た目の問題。3 と 4 は修正が小さい。
 
-- [ ] **3. （中）ファイル選択画面が無い端末でクラッシュする**（`ScanActivity.onCreate`、`GenerateActivity.onCreate`）
+- [x] **3. （中）ファイル選択画面が無い端末でクラッシュする**（`ScanActivity.onCreate`、`GenerateActivity.onCreate`） (#24)
     - `ACTION_GET_CONTENT` と `ACTION_CREATE_DOCUMENT` の `ActivityNotFoundException` を捕捉し、「失敗しました」を出す
 - [ ] **4. （中）HandlerThread を `onResume` ごとに作り直している**（`ScanActivity.onResume` / `onPause`）
     - 一時停止→再開が素早いと、前のスレッドの `release()` より先に `Camera.open()` が走り「カメラを使用できません」になり得る
